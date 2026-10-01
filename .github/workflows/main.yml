@@ -34,10 +34,12 @@ jobs:
           MAX_SECONDS: "18000"
         run: python build_catalog.py
 
-      - name: Сохранение результата
+       - name: Сохранение результата
+        if: always()
         run: |
           git config user.name "catalog-bot"
           git config user.email "catalog-bot@users.noreply.github.com"
           git add catalog-tools/catalog.csv catalog-tools/product_urls.csv
           git commit -m "Обновление каталога" || exit 0
+          git pull --rebase origin main
           git push
