@@ -31,7 +31,7 @@ jobs:
         env:
           CATALOG_PREFIX: "krepej_i_takelaj/samorezy_shurupy"
           CATALOG_LIMIT: "0"
-          MAX_SECONDS: "300"
+          MAX_SECONDS: "18000"
         run: python build_catalog.py
 
       - name: Сохранение результата
