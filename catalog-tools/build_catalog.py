@@ -18,6 +18,7 @@ import csv
 import os
 import time
 from collections import Counter
+from datetime import datetime, timezone
 
 from check_product import fetch_product
 
@@ -34,6 +35,7 @@ MAX_REMOVE_SHARE = 0.2  # если пропало больше 20% товаро�
 
 URLS_FILE = "product_urls.csv"
 CATALOG_FILE = "catalog.csv"
+STATUS_FILE = "status.txt"  # короткий отчёт: сколько собрано и сколько осталось
 FIELDS = ["id", "title", "price", "category", "url"]
 
 
@@ -109,6 +111,26 @@ def tidy_catalog(url_rows: list) -> None:
               f"обновлено адресов {moved}, убрано дублей {duplicates}.")
 
 
+def write_status(ordered: list) -> None:
+    """Пишет отчёт status.txt: сколько товаров выбранных разделов уже в каталоге."""
+    done = {row["id"] for row in read_catalog()}
+    collected = sum(1 for row in ordered if row["id"] in done)
+    total = len(ordered)
+    state = "СОБРАНО ПОЛНОСТЬЮ" if collected == total else "ЕЩЁ НЕ ВСЁ: запустите сбор ещё раз"
+    now = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+    lines = [
+        f"Обновлено: {now}",
+        f"Разделы: {', '.join(prefixes())}",
+        f"Товаров в разделах на сайте: {total}",
+        f"Собрано в каталоге: {collected}",
+        f"Осталось: {total - collected}",
+        f"Статус: {state}",
+    ]
+    with open(STATUS_FILE, "w", encoding="utf-8") as file:
+        file.write("\n".join(lines) + "\n")
+    print("\n" + "\n".join(lines))
+
+
 def crawl(rows: list) -> None:
     done = {row["id"] for row in read_catalog()}
 
@@ -147,6 +169,7 @@ def crawl(rows: list) -> None:
             file.flush()
             print(f"{number}/{len(todo)}  {data['title']}  {data['price']} руб.")
             time.sleep(PAUSE)
+    write_status(ordered)
     print("\nГотово. Результат в файле", CATALOG_FILE)
 
 
